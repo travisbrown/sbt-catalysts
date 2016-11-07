@@ -20,7 +20,7 @@ import sbtrelease.ReleasePlugin.autoImport._
 import ReleaseTransformations._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import ScalaJSPlugin.autoImport._
-import scoverage.ScoverageSbtPlugin._
+import scoverage.ScoverageKeys
 import org.scalajs.sbtplugin.cross.{CrossProject, CrossType}
 
 /**
@@ -248,8 +248,6 @@ trait CatalystsBase {
   lazy val sharedJsSettings = Seq(
     scalaJSStage in Global := FastOptStage,
     parallelExecution := false,
-    // Using Rhino as jsEnv to build scala.js code can lead to OOM, switch to NodeJS by default
-    scalaJSUseRhino := false,
     requiresDOM := false,
     jsEnv := NodeJSEnv().value,
     // batch mode decreases the amount of memory needed to compile scala.js code
@@ -349,7 +347,7 @@ trait CatalystsBase {
     //use this when activator moved to 13.9
    // scalacOptions in (Compile, console) -= "-Ywarn-unused-import",
     scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
-    scalacOptions in (Test, console) <<= (scalacOptions in (Compile, console))
+    scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
   )
 
   /** Adds the credential settings required for sonatype releases.*/
@@ -398,7 +396,7 @@ trait CatalystsBase {
 
     CrossProject(cpId, new File(cpId), crossType)
      .settings(moduleName := s"$proj-$id")
-    .configure(projConfig)
+    .configureCross(projConfig)
   }
 
   /**
@@ -447,7 +445,7 @@ trait CatalystsBase {
     _.in(file("."))
     .settings(rootSettings)
     .settings(projSettings)
-    .settings(console <<= console in (projJVM, Compile))
+    .settings(console := (console in (projJVM, Compile)).value)
 
   /**
    * Creates the rootJVM project.
